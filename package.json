@@ -1,0 +1,31 @@
+{
+  "name": "secureframe-react",
+  "version": "1.0.0",
+  "description": "A React component to register a credit card with SecurePay.",
+  "main": "dist/secureframe-react.js",
+  "scripts": {
+    "build": "./node_modules/.bin/webpack --config webpack.config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Gency (hello@gency.com.au)",
+  "license": "ISC",
+  "dependencies": {
+    "moment": "^2.18.1",
+    "prop-types": "^15.5.10",
+    "react": "^15.5.4",
+    "react-iframe": "^1.0.5",
+    "react-popupbox": "^2.0.0",
+    "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "css-loader": "^0.28.4",
+    "style-loader": "^0.18.1",
+    "webpack": "^2.6.1"
+  }
+}
