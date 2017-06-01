@@ -50,8 +50,7 @@ class SecureFrame extends Component {
   }
   
   receiveMessage (event) {
-    if (!event.data || event.data.type !== 'secureframe') {
-      console.warn('event data type not secureframe', event.data ? event.data.type : null)
+    if (!event.data || event.data.source !== 'secureframe') {
       return
     }
     let response = event.data.payload
@@ -158,7 +157,6 @@ class SecureFrame extends Component {
     `
     return (
       <Iframe url={`data:text/html;base64,${btoa(launchHtml)}`}
-        ref={'frame'}
         width="100%"
         height="420px"
         display="initial"
