@@ -1,6 +1,6 @@
 {
   "name": "secureframe-react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A React component to register a credit card with SecurePay.",
   "main": "dist/secureframe-react.js",
   "scripts": {
