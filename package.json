@@ -1,6 +1,6 @@
 {
   "name": "secureframe-react",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A React component to register a credit card with SecurePay.",
   "main": "dist/secureframe-react.js",
   "scripts": {
@@ -8,7 +8,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Gency (hello@gency.com.au)",
-  "keywords": ["securepay", "creditcard"],
+  "keywords": [
+    "securepay",
+    "creditcard"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/ttoohey/secureframe-react.git"
