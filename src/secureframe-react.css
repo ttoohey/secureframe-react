@@ -1,0 +1,38 @@
+.error {
+  text-align: left;
+  min-height: 200px;
+}
+
+.error label {
+  font-size: larger;
+  font-weight: bolder;
+}
+
+.error .message {
+  margin-bottom: 36px;
+}
+
+.error span {
+  color: darkred;
+}
+
+.error .buttons {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  text-align: center;
+  border-top: 1px solid #999;
+}
+
+.error button {
+  margin: 12px;
+  padding: 6px 12px;
+  border: 0;
+  background-color: darkblue;
+  color: white;
+  text-transform: uppercase;
+}
+.error button:hover {
+  background-color: blue
+}
