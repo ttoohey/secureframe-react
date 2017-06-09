@@ -18,12 +18,10 @@
   },
   "license": "ISC",
   "dependencies": {
+    "js-base64": "^2.1.9",
     "moment": "^2.18.1",
     "prop-types": "^15.5.10",
-    "react": "^15.5.4",
-    "react-iframe": "^1.0.5",
-    "react-popupbox": "^2.0.0",
-    "uuid": "^3.0.1"
+    "react": "^15.5.4"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",

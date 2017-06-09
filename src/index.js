@@ -1,17 +1,21 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import Iframe from 'react-iframe'
-import { PopupboxManager, PopupboxContainer } from 'react-popupbox'
+import Iframe from './Iframe'
 import moment from 'moment'
-import uuid from 'uuid'
 import { Base64 } from 'js-base64'
-import 'react-popupbox/dist/react-popupbox.css'
-import './secureframe-react.css'
+
+const TXN_TYPE_PREAUTH = '1'
+const TXN_TYPE_STORE = '8'
+const STORE_TYPE_PAYOR = 'payor'
+const SUMMARYCODE_APPROVED = '1'
+const SUMMARYCODE_DECLINEDBYBANK = '2'
+const SUMMARYCODE_DECLINEDOTHER = '3'
+const SUMMARYCODE_CANCELLED = '4'
 
 function mapHidden (inputs) {
-  return Object.entries(inputs).map(([n, v]) => {
-    return v === undefined ? null : `<input type="hidden" name="${htmlEntities(n)}" value="${htmlEntities(v)}" />`
-  }).filter(v => v !== null)
+  return Object.entries(inputs).map(([ name, value]) => {
+    return value === undefined ? null : `<input type="hidden" name="${htmlEntities(name)}" value="${htmlEntities(value)}" />`
+  }).filter(value => value !== null)
 }
 
 function htmlEntities(str) {
@@ -22,6 +26,14 @@ class SecureFrame extends Component {
   
   static propTypes = {
     live: PropTypes.bool,
+    merchantId: PropTypes.string,
+    title: PropTypes.string,
+    image: PropTypes.string,
+    referenceName: PropTypes.string,
+    cardTypes: PropTypes.string,
+    template: PropTypes.string,
+    returnUrl: PropTypes.string,
+    styleUrl: PropTypes.string
   }
   
   static defaultProps = {
@@ -30,155 +42,99 @@ class SecureFrame extends Component {
   
   constructor (props) {
     super(props)
-    this.content = null
     this.state = {
-      txn_type: '1',
-      store_type: 'payor',
+      txn_type: props.store ? TXN_TYPE_STORE : TXN_TYPE_PREAUTH,
+      store_type: STORE_TYPE_PAYOR,
+      primary_ref: null,
       payor: null,
-      buffer: null,
+      amount: null,
       fingerprint: null,
-      fp_timestamp: null,
-      error: null
+      fp_timestamp: null
     }
     this.receiveMessage = this.receiveMessage.bind(this)
   }
   
+  componentWillMount () {
+    this.makeFingerprint()
+  }
+  
   componentDidMount () {
     window.addEventListener('message', this.receiveMessage, false)
+    this._isMounted = true
   }
   
   componentWillUnmount () {
     window.removeEventListener('message', this.receiveMessage, false)
+    this._isMounted = false
+  }
+  
+  componentWillReceiveProps (nextProps) {
+    this.makeFingerprint(nextProps)
   }
   
   receiveMessage (event) {
     if (!event.data || event.data.source !== 'secureframe') {
       return
     }
-    const { store_type, fp_timestamp } = this.state
+    const { store_type, txn_type, fp_timestamp } = this.state
     let response = event.data.payload
     if (event.data.encoding === 'base64') {
       response = JSON.parse(Base64.decode(response))
-      if (response.summarycode === '1') {
-        if (store_type === '8') {
-          response.subject = `${store_type}|${response.payor}|${fp_timestamp}|${response.summarycode}`
-        } else {
-          response.subject = `${response.refid}|${response.amount}|${response.timestamp}|${response.summarycode}`
-        }
-        (this.props.onPaymentApproved || this.props.onPayment)(response)
-        this.closePopupbox()
-      } else if (response.summarycode === '2' || response.summarycode === '3') {
-        (this.props.onPaymentDeclined || this.props.onPayment)(response)
-        PopupboxManager.update({ content: this.renderError(response.restext) })
+      if (response.summarycode === '1' && txn_type === TXN_TYPE_STORE) {
+        response.subject = `${store_type}|${response.payor}|${fp_timestamp}|${response.summarycode}`
       } else {
-        (this.props.onPaymentCancelled || this.props.onPayment)(response)
-        this.closePopupbox()
+        response.subject = `${response.refid}|${response.amount}|${response.timestamp}|${response.summarycode}`
       }
-    } else {
-      this.props.onPayment && this.props.onPayment(response)
-      this.closePopupbox()
+    }
+    this.onPayment(response)
+    this.setState({ fingerprint: null })
+    this.makeFingerprint()
+  }
+  
+  onPayment (response) {
+    if (response.summarycode === SUMMARYCODE_APPROVED && this.props.onPaymentApproved) {
+      return this.props.onPaymentApproved(response)
+    }
+    if ([SUMMARYCODE_DECLINEDBYBANK, SUMMARYCODE_DECLINEDOTHER].includes(response.summarycode) && this.props.onPaymentDeclined) {
+      return this.props.onPaymentDeclined(response.restext, response)
+    }
+    if (response.summarycode === SUMMARYCODE_CANCELLED && this.props.onPaymentCancelled) {
+      return this.props.onPaymentCancelled(response)
+    }
+    if (this.props.onPayment) {
+      return this.props.onPayment(response)
     }
   }
   
-  makeFingerprint () {
+  makeFingerprint (_props) {
+    const props = _props || this.props
     const { txn_type, store_type } = this.state
-    const payor = this.props.payor || uuid.v4()
-    const primary_ref = this.props.reference || uuid.v4()
-    const amount = this.props.amount || 100
+    const primary_ref = props.reference
+    let payor = props.payor
+    const amount = props.amount || 100
     const fp_timestamp = moment.utc().format("YYYYMMDDHHMMSS");
     let subject
-    if (txn_type === '8') {
+    if (txn_type === TXN_TYPE_STORE) {
+      payor = payor || primary_ref
       subject = `${txn_type}|${store_type}|${payor}|${fp_timestamp}`
     } else {
       subject = `${txn_type}|${primary_ref}|${amount}|${fp_timestamp}`
     }
-    return this.props.onSignPayment(subject)
-      .then(fingerprint => this.setState({ primary_ref, payor, amount, fp_timestamp, fingerprint }))
-  }
-  
-  handleClosed () {
-    this.setState({ fingerprint: null })
-    this.content = null
-  }
-  
-  openPopupbox () {
-    this.makeFingerprint().then(() => {
-      PopupboxManager.open({
-        content: this.renderContent(),
-        config: {
-          fadeIn: true,
-          fadeInSpeed: 300,
-        },
+    return props.onSignPayment(subject)
+      .then(fingerprint => {
+        console.log('makeFingerprint', subject, fingerprint)
+        this._isMounted && this.setState({ primary_ref, payor, amount, fp_timestamp, fingerprint })
+        return fingerprint
       })
-    })
-  }
-  
-  closePopupbox () {
-    this.content = null
-    this.setState({ error: null, fingerprint: null })
-    PopupboxManager.close()
-  }
-  
-  reset () {
-    this.content = null
-    this.setState({ error: null, fingerprint: null })
-    this.makeFingerprint().then(() => {
-      PopupboxManager.update({
-        content: this.renderContent()
-      })
-    })
   }
   
   render () {
-    const button = React.cloneElement(
-      this.props.children || <button className={this.props.buttonClassName} style={this.props.buttonStyle}>{this.props.buttonLabel || 'Set Card'}</button>,
-      {[this.props.triggerEvent || 'onClick'] : () => this.openPopupbox()}
-    )
-    return (
-      <div>
-        {button}
-        <PopupboxContainer
-          onClosed={() => this.handleClosed()}
-          />
-      </div>
-    )
-    
-  }
-  
-  renderError (error) {
-    let buttons = this.props.errorButtons
-    if (!buttons) {
-      buttons = [
-        <button key={0}>Retry</button>,
-        <button key={1}>Close</button>
-      ]
-    }
-    buttons[0] = React.cloneElement(buttons[0], {
-      [this.props.triggerEvent || 'onClick'] : () => this.reset()
-    })
-    buttons[1] = React.cloneElement(buttons[1], {
-      [this.props.triggerEvent || 'onClick'] : () => this.closePopupbox()
-    })
-    return (
-      <div className='error'>
-        <label>Transaction declined</label>
-        <div className='message'>
-          <p>
-            We could not complete the transaction due to the following:
-          </p>
-          <span>{error}</span>
-          <p>
-            Please check your card details and try again.
-          </p>
-        </div>
-        <div className='buttons'>{buttons}</div>
-      </div>
-    )
-  }
-  
-  renderContent () {
     const { txn_type, store_type, primary_ref, payor, amount, fingerprint, fp_timestamp } = this.state
     const { merchantId, title, image, referenceName, cardTypes, template, returnUrl, styleUrl } = this.props
+    
+    if (fingerprint === null) {
+      return null
+    }
     
     const inputs = {
       bill_name: 'transact',
@@ -195,7 +151,7 @@ class SecureFrame extends Component {
       confirmation: 'false',
       card_types: cardTypes ? cardTypes.join('|') : undefined,
       title,
-      primary_ref_name: referenceName || 'Customer',
+      primary_ref_name: referenceName || 'Customer reference',
       page_header_image: image,
       template: template || 'responsive',
       page_style_url: styleUrl || 'https://try.gency.com.au/tim/secureframe-react/style.css',
@@ -210,7 +166,7 @@ class SecureFrame extends Component {
     const launchHtml = `
       <!DOCTYPE html>
       <html><body onload="document.forms[0].submit()">
-        <form action="${transactionUrl}" method="post">
+        <form action="${htmlEntities(transactionUrl)}" method="post">
         ${mapHidden(inputs).join('')}
         </form>
       </body></html>
@@ -224,7 +180,6 @@ class SecureFrame extends Component {
       />
     )
   }
-  
 }
 
 export default SecureFrame
