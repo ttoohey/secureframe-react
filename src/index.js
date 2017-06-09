@@ -122,7 +122,6 @@ class SecureFrame extends Component {
     }
     return props.onSignPayment(subject)
       .then(fingerprint => {
-        console.log('makeFingerprint', subject, fingerprint)
         this._isMounted && this.setState({ primary_ref, payor, amount, fp_timestamp, fingerprint })
         return fingerprint
       })
