@@ -1,6 +1,7 @@
 import React, {PureComponent} from "react"
 import PropTypes from "prop-types"
-const Iframe = class extends PureComponent {
+
+class Iframe extends PureComponent {
   render() {
     return React.createElement("iframe", {
       frameBorder: "0",
