@@ -120,9 +120,17 @@ class SecureFrame extends Component {
     } else {
       subject = `${txn_type}|${primary_ref}|${amount}|${fp_timestamp}`
     }
-    return props.onSignPayment(subject)
-      .then(fingerprint => {
-        this._isMounted && this.setState({ primary_ref, payor, amount, fp_timestamp, fingerprint })
+    const data = { txn_type, store_type, primary_ref, payor, amount, fp_timestamp }
+    return props.onSignPayment(subject, data)
+      .then(response => {
+        let fingerprint, data
+        if (typeof response === 'string') {
+          fingerprint = response
+        } else {
+          fingerprint = response.fingerprint
+          data = response
+        }
+        this._isMounted && this.setState({ primary_ref, payor, amount, fp_timestamp, ...data, fingerprint })
         return fingerprint
       })
   }
