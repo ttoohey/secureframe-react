@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import Iframe from 'Iframe'
+import Iframe from 'react-iframe'
 import moment from 'moment'
 import { Base64 } from 'js-base64'
 
