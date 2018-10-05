@@ -137,7 +137,7 @@ class SecureFrame extends Component {
   
   render () {
     const { txn_type, store_type, primary_ref, payor, amount, fingerprint, fp_timestamp } = this.state
-    const { merchantId, title, image, referenceName, cardTypes, template, returnUrl, styleUrl } = this.props
+    const { merchantId, title, image, referenceName, cardTypes, template, returnUrl, styleUrl, ...props } = this.props
     
     if (fingerprint === null) {
       return null
@@ -179,11 +179,13 @@ class SecureFrame extends Component {
       </body></html>
     `
     return (
-      <Iframe url={`data:text/html;base64,${btoa(launchHtml)}`}
+      <Iframe
         width="100%"
         height="420px"
         display="initial"
         position="relative"
+        {...props}
+        url={`data:text/html;base64,${btoa(launchHtml)}`}
       />
     )
   }
