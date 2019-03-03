@@ -20,16 +20,15 @@
   "license": "ISC",
   "dependencies": {
     "js-base64": "^2.4.9",
-    "moment": "^2.22.2",
+    "moment": "^2.24.0",
     "prop-types": "^15.6.2",
     "react": "^15.6.2",
-    "react-iframe": "^1.3.3"
+    "react-iframe": "^1.5.0"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-react": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1"
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.3.4",
+    "@babel/plugin-proposal-class-properties": "^7.3.4",
+    "@babel/preset-react": "^7.0.0"
   }
 }
